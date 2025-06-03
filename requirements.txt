@@ -1,0 +1,9 @@
+pandas
+numpy
+torch
+matplotlib
+scikit-learn
+denseweight
+pybaseball
+seaborn
+tqdm

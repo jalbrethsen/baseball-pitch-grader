@@ -2,7 +2,7 @@
 
 ## **Project Overview**
 
-This project aims to provide a more nuanced understanding of batter performance by adjusting traditional batting average (BA) based on the inherent "hittability" of the pitches a batter faces. We achieve this by first training a Multi-Layer Perceptron (MLP) neural network to predict pitch outcomes (walk, strike, in-play) and then using the predicted "in-play" probability as a proxy for pitch hittability. Subsequently, a linear regression model is employed to statistically adjust each batter's observed batting average, accounting for the average difficulty of the pitches they encountered.
+This project aims to provide a more nuanced understanding of batter performance by adjusting traditional batting average (BA) based on the inherent "hittability" of the pitches a batter faces. We achieve this by first training a Multi-Layer Perceptron (MLP) neural network to predict pitch outcomes (walk, strike, in-play) and then using the ratio of predicted "in-play" to predicted "strike" probability as a proxy for pitch hittability. Subsequently, a linear regression model is employed to statistically adjust each batter's observed batting average, accounting for the average difficulty of the pitches they encountered.
 
 The core idea is to normalize a batter's performance: a batter who achieves a certain batting average while facing consistently difficult pitches should be rated higher than a batter achieving the same average against easier pitches.
 
@@ -80,7 +80,7 @@ Once each pitch has a hittability\_score, we proceed with adjusting batter batti
    source venv/bin/activate  \# On Windows: \`venv\\Scripts\\activate\`
 
 3. **Install Dependencies:**  
-   pip install pybaseball jupyter torch pandas numpy scikit-learn statsmodels
+   pip install -r requirements.txt
 
 
 ## **Usage**
@@ -88,7 +88,7 @@ Once each pitch has a hittability\_score, we proceed with adjusting batter batti
 1. **Feature Selection:**
    * Run the notebook feature_selection.ipynb to see statcast feature relevance to outcomes.
 1. **Prepare Your Data:**  
-   * Run the notebook prepare_input.ipynb, here we download the Statcast data from 2015 to 2024 and preprocess it (e.g., handling missing values, manipulate data to get previous pitch features, min/max scale to normalize).  
+   * Run the notebook prepare_input.ipynb, here we use pybaseball to download the Statcast data from 2015 to 2024 and preprocess it (e.g., handling missing values, manipulate data to get previous pitch features, min/max scale to normalize).  
 2. **Train the MLP Model:**  
    * Run the notebook pitch_grader.ipynb that trains the MLP to classify pitch outcomes (Walk/Strike/In-Play).   
    * Save your trained MLP model.  
