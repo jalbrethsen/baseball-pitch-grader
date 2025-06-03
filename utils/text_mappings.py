@@ -38,8 +38,7 @@ events = {
     "truncated_pa": 17,
     "sac_bunt": 18,
     "intent_walk": 19,
-    "sac_fly_double_play": 20,
-    "strikeout_double_play": 21,
+    "strikeout_double_play": 20,
 }
 outcomes = {
     "line_drive": 0,

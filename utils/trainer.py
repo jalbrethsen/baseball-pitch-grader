@@ -2,7 +2,6 @@ import torch.optim as optim
 import torch
 import torch.nn as nn
 import seaborn as sn
-import numpy as np
 from sklearn.metrics import classification_report, confusion_matrix
 from tqdm import tqdm
 

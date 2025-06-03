@@ -1,13 +1,14 @@
 import pandas as pd
-import numpy as np
 from pathlib import Path
 from urllib.parse import urlparse, parse_qs
-from utils.text_mappings import pitch_types, righty_lefty, pitch_outcomes
-from pybaseball import statcast, cache
+from utils.text_mappings import pitch_outcomes
+from pybaseball import statcast
 import json
 
 
-def read_from_cache(start_year,end_year,columns=None, directory="~/.pybaseball/cache/"):
+def read_from_cache(
+    start_year, end_year, columns=None, directory="~/.pybaseball/cache/"
+):
     """
     For duplicate queries we read from cache on disk
     """
@@ -15,17 +16,16 @@ def read_from_cache(start_year,end_year,columns=None, directory="~/.pybaseball/c
     parquets = []
     # first get all the correct parquet files from the desired year
     for json_file in data_dir.glob("get_statcast_data_from_csv*.cache_record.json"):
-        with open(json_file,'r') as jsonin:
+        with open(json_file, "r") as jsonin:
             metadata = json.load(jsonin)
-            url_parsed = urlparse(metadata['args'][0])
-            game_date = parse_qs(url_parsed.query)['game_date_gt'][0]
-            year = game_date.split('-')[0]
+            url_parsed = urlparse(metadata["args"][0])
+            game_date = parse_qs(url_parsed.query)["game_date_gt"][0]
+            year = game_date.split("-")[0]
             if int(year) >= int(start_year) and int(year) <= int(end_year):
-                parquets.append(metadata['dataframe'])
+                parquets.append(metadata["dataframe"])
     # concat all the parquet files together to single dataframe, pulling only our desired columns
     full_df = pd.concat(
-        pd.read_parquet(parquet_file, columns=columns)
-        for parquet_file in parquets
+        pd.read_parquet(parquet_file, columns=columns) for parquet_file in parquets
     )
     return full_df
 
@@ -55,6 +55,7 @@ def pull_statcast_multiyear(start_year, end_year, columns=None, verbose=False):
     )
     return full_df
 
+
 def get_valid_batters(df, min_pitches):
     """
     This function filters out the batters who are less than the minimum atbats
@@ -66,6 +67,7 @@ def get_valid_batters(df, min_pitches):
     batter_map = {int(valid_batter_ids[i]): i for i in range(len(valid_batter_ids))}
     df.batter = df.batter.map(batter_map)
     return df, batter_map
+
 
 def get_valid_pitchers(df, min_pitches):
     """
@@ -79,33 +81,42 @@ def get_valid_pitchers(df, min_pitches):
     df.pitcher = df.pitcher.map(pitcher_map)
     return df, pitcher_map
 
+
 def get_prev_pitch_features(df):
     """
     This function groups by game id and at bat number to get previous pitch features
     """
-    df = df.sort_values(by=['game_pk', 'at_bat_number', 'pitch_number'])
-    df['previous_pitch_speed'] = df.groupby(['game_pk', 'at_bat_number'])['release_speed'].shift(1)
-    df['previous_pitch_type'] = df.groupby(['game_pk', 'at_bat_number'])['pitch_type'].shift(1)
-    df['previous_zone'] = df.groupby(['game_pk', 'at_bat_number'])['zone'].shift(1)
-    df['previous_plate_x'] = df.groupby(['game_pk', 'at_bat_number'])['plate_x'].shift(1)
-    df['previous_plate_z'] = df.groupby(['game_pk', 'at_bat_number'])['plate_z'].shift(1)
+    df = df.sort_values(by=["game_pk", "at_bat_number", "pitch_number"])
+    df["previous_pitch_speed"] = df.groupby(["game_pk", "at_bat_number"])[
+        "release_speed"
+    ].shift(1)
+    df["previous_pitch_type"] = df.groupby(["game_pk", "at_bat_number"])[
+        "pitch_type"
+    ].shift(1)
+    df["previous_zone"] = df.groupby(["game_pk", "at_bat_number"])["zone"].shift(1)
+    df["previous_plate_x"] = df.groupby(["game_pk", "at_bat_number"])["plate_x"].shift(
+        1
+    )
+    df["previous_plate_z"] = df.groupby(["game_pk", "at_bat_number"])["plate_z"].shift(
+        1
+    )
     return df
 
-def preprocess(df,pitch_features, min_pitches=5000):
+
+def preprocess(df, pitch_features, min_pitches=5000):
     """
-    Take input dataframe of statcast data 
+    Take input dataframe of statcast data
     Get whether the ball is ball, strike, or inplay mapped to integer
     Clean up valid pitches and regular season games
     """
     # get regular season games
     df = df[df.game_type == "R"]
     df = get_prev_pitch_features(df)
-    df['type'] = df['type'].map(pitch_outcomes)
-    df, pitcher_map = get_valid_pitchers(df,min_pitches)
-    df, batter_map = get_valid_batters(df,min_pitches)
+    df["type"] = df["type"].map(pitch_outcomes)
+    df, pitcher_map = get_valid_pitchers(df, min_pitches)
+    df, batter_map = get_valid_batters(df, min_pitches)
     # filter out unneeded features to reduce processing time
     df = df[pitch_features]
     # filter out unknown pitch types
     df.fillna(0, inplace=True)
     return df, batter_map, pitcher_map
-    
