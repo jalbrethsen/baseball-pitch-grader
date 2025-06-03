@@ -6,10 +6,12 @@ This project aims to provide a more nuanced understanding of batter performance 
 
 The core idea is to normalize a batter's performance: a batter who achieves a certain batting average while facing consistently difficult pitches should be rated higher than a batter achieving the same average against easier pitches.
 
+We show the predicted strike probabilities correlates well to a pitcher's strikeout ability implying we can evaluate pitchers swing-and-miss ability based solely on statcast data. Additionally, we use the hittability score to quantify pitch quality impact on a specific batting statistic like batting average and adjust the statistic to normalize for pitch difficulty. We look at some of the higher adjustment levels and find that it can be used to identify flukey seasons and see how a player's pitch difficulty is impacted by the team around him.
+
 ## **Features**
 
 * **Pitch Outcome Classification (MLP):** Trains a neural network to predict whether a pitch will result in a walk, strike, or ball in play.  
-* **Hittability Score Generation:** Derives a "hittability score" for each pitch based on the MLP's predicted probability of that pitch resulting in a ball in play.  
+* **Hittability Score Generation:** Derives a "hittability score" for each pitch based on the MLP's predicted probability of that pitch resulting in a ball in play divided by the probability of the pitch resulting in a strike.  
 * **Batting Average Adjustment:** Implements a regression-based method to adjust a batter's observed batting average, normalizing it for the average hittability of pitches faced.  
 * **Control for Batter Skill:** Incorporates career batting average and batter handedness as control variables in the adjustment model to isolate the effect of pitch difficulty.  
 * **Comprehensive Statcast Data Usage:** Utilizes a large dataset of Statcast pitch-by-pitch data from 2015 to 2024\.
@@ -78,32 +80,25 @@ Once each pitch has a hittability\_score, we proceed with adjusting batter batti
    source venv/bin/activate  \# On Windows: \`venv\\Scripts\\activate\`
 
 3. **Install Dependencies:**  
-   pip install pandas numpy scikit-learn statsmodels \# Add your specific ML library if not scikit-learn
+   pip install pybaseball jupyter torch pandas numpy scikit-learn statsmodels
 
-4. **Acquire Statcast Data:**  
-   * This project assumes you have access to Statcast pitch-by-pitch data from 2015-2024. You'll need to download or query this data. Popular sources include [Baseball Savant](https://baseballsavant.mlb.com/statcast_search) or dedicated Python packages like pybaseball.  
-   * Place your raw Statcast data files (e.g., CSVs or a database connection) in a designated data/raw directory, or modify the data loading path in the scripts.
 
 ## **Usage**
 
+1. **Feature Selection:**
+   * Run the notebook feature_selection.ipynb to see statcast feature relevance to outcomes.
 1. **Prepare Your Data:**  
-   * Ensure your Statcast data is loaded and preprocessed as needed (e.g., handling missing values, feature engineering for MLP inputs).  
-   * Make sure you have batter career statistics available for the control variable.  
+   * Run the notebook prepare_input.ipynb, here we download the Statcast data from 2015 to 2024 and preprocess it (e.g., handling missing values, manipulate data to get previous pitch features, min/max scale to normalize).  
 2. **Train the MLP Model:**  
-   * Run your script that trains the MLP to classify pitch outcomes (Walk/Strike/In-Play). This will likely involve feature scaling, splitting data into training/validation sets, and defining your neural network architecture.  
+   * Run the notebook pitch_grader.ipynb that trains the MLP to classify pitch outcomes (Walk/Strike/In-Play).   
    * Save your trained MLP model.  
-3. **Generate Hittability Scores:**  
-   * Modify the calculate\_hitability function in the provided Python script (or a separate module) to load your trained MLP model and perform inference on each pitch in your Statcast dataset. The function should return the predicted "in-play" probability.  
-4. **Run the Adjustment Script:**  
-   * Execute the main Python script that performs the batting average adjustment. This script will:  
+3. **Evaluate Hittability:**  
+   * Run the notebook evaluation.ipynb to perform inference on each pitch in your Statcast dataset and use it to normalize batting average with respect to pitch hittability. This notebook will:  
      * Load the pitch data with hittability\_score calculated.  
      * Aggregate data by batter.  
      * Add control variables (career BA, handedness).  
      * Run the linear regression.  
      * Calculate and display the adjusted batting averages.
-
-python your\_main\_adjustment\_script.py  
-(Replace your\_main\_adjustment\_script.py with the actual name of your Python file containing the adjustment logic).
 
 ## **Interpretation of Results**
 
@@ -121,5 +116,6 @@ This adjusted metric provides a more "fair" comparison of batter performance by 
 * **More Granular Control Variables:** Incorporate additional factors like pitcher fatigue, game situation (e.g., leverage index), and park factors into the regression model for even more precise adjustments.  
 * **Advanced Adjustment Models:** Explore more sophisticated statistical models (e.g., hierarchical models, Bayesian methods) that can better handle varying sample sizes per batter and complex interactions.  
 * **Time-Series Analysis:** Analyze how adjusted batting averages change over time for individual players, identifying trends beyond raw performance.  
+* **Pitch Sequence Analysis:** The sequence of pitches in an at-bat should influence the outcome, additionally batter's may be better or worse at handling specific pitch sequences. 
 * **Visualization Dashboard:** Create interactive visualizations to explore adjusted batting averages, pitch hittability distributions, and individual batter performance.  
 * **Pitcher Hittability Adjustment:** Extend the concept to adjust pitcher performance metrics (e.g., ERA, FIP) based on the average hittability of pitches *they throw*.
